@@ -84,7 +84,7 @@ void BpNet::Train() {
 
 void BpNet::Test() {
   while (1) {
-    cout << "Test the model? (y/n):";
+    cout << "\nTest the model? (y/n):";
     char c;
     cin.get(c);
     if (c == 'y' || c == 'Y') {}
@@ -96,16 +96,19 @@ void BpNet::Test() {
 
     cout << "Please input the data:\n";
     Data test = {{0, 0, 1},{0}};
-    for (auto& e : test.in) {
-      cin >> e;
+    for (size_t i = 0; i < test.in.size() - 1; ++i) {
+      cin >> test.in[i];
     }
+
+    cin.clear();
+    cin.ignore(INT_MAX, '\n');
 
     array_h1 out_h1 = {0};
     GetOutH1(test.in, out_h1);
 
     GetOutO(out_h1, test.out);
 
-    cout << "\nThe output is:\n";
+    cout << "The output is:\n";
     for (const auto& e : test.out) {
       cout << e << "\t";
     }
