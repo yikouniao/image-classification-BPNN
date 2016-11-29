@@ -6,7 +6,7 @@
 using namespace std;
 
 int main(int argc, char** argv) {
-  BpNet bp_net;
-  bp_net.Train();
-  bp_net.Test();
+  BpNet* bp_net = new BpNet();
+  bp_net->Train();
+  bp_net->Test();
 }

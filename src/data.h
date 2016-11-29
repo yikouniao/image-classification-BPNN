@@ -3,7 +3,9 @@
 #include <array>
 #include <vector>
 
-#define IN 2
+// The number of actual input nodes shold be IN - 1. The special node with
+// value 1 works the same as thresholds of next layer.
+#define IN 3
 #define OUT 1
 
 using array_i = std::array<double, IN>;
