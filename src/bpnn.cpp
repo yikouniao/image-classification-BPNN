@@ -3,9 +3,13 @@
 #include <cstdlib>
 #include <ctime>
 
-using namespace std;
+namespace bpnn {
+
+using std::cout;
+using data::DataSet;
 
 namespace {
+
 // get a random number in [-0.1 0.1]
 inline double GetRand() {
   return 0.2 * rand() / RAND_MAX - 0.1;
@@ -15,13 +19,14 @@ inline double GetRand() {
 inline double Sigmod(double x) {
   return 1 / (1 + exp(-x));
 }
+
 } // namespace
 
 BpNet::BpNet(double rate_h1_, double rate_o_, double err_thres_)
-    : rate_h1(rate_h1_), rate_o(rate_o_), err_thres(err_thres_) {
-      srand(time(0)); // use current time as seed for random generator
+  : rate_h1(rate_h1_), rate_o(rate_o_), err_thres(err_thres_) {
+  srand(time(0)); // use current time as seed for random generator
 
-  // initialize w_h1
+// initialize w_h1
   for (auto& w_each_i : w_h1) {
     for (auto& w : w_each_i) {
       w = GetRand();
@@ -38,8 +43,11 @@ BpNet::BpNet(double rate_h1_, double rate_o_, double err_thres_)
 
 BpNet::~BpNet() {}
 
-void BpNet::Train() {
-  const size_t samples_num = samples.size();
+void BpNet::Train(const std::string& filepath) {
+  DataSet* samples = new DataSet;
+  samples->GetTrainData(filepath);
+
+  const size_t samples_num = samples->dataset.size();
   size_t train_times = 0;
   bool conv = false;
   while (!conv) {
@@ -49,21 +57,23 @@ void BpNet::Train() {
     for (size_t samples_order = 0; samples_order < samples_num; ++samples_order) {
       // Propagation
       array_h1 out_h1 = {0};
-      GetOutH1(samples[samples_order].in, out_h1);
+      GetOutH1(samples->dataset[samples_order].in, out_h1);
 
       array_o out_o = {0};
       GetOutO(out_h1, out_o);
 
       array_o err_o = {0};
-      GetErrO(samples[samples_order].out, out_o, err_o);
+      GetErrO(samples->dataset[samples_order].out, out_o, err_o);
       if (!CheckConv(err_o)) {
         conv = false;
       }
-      cout << "Sample " << samples_order << " error: ";
-      for (const auto& e_o : err_o) {
-        cout << e_o << "\t";
+      if (!(samples_order % 5)) {
+        cout << "Sample " << samples_order << " error: ";
+        for (const auto& e_o : err_o) {
+          cout << e_o << "\t";
+        }
+        cout << "\n";
       }
-      cout << "\n";
 
       // weights and thresholds update
       array_o sigma_o = {0};
@@ -76,44 +86,37 @@ void BpNet::Train() {
       GetSigmaH1(out_h1, err_h1, sigma_h1);
 
       UpdateWO(out_h1, sigma_o);
-      UpdateWH1(samples[samples_order].in, sigma_h1);
+      UpdateWH1(samples->dataset[samples_order].in, sigma_h1);
     }
   }
+  delete samples;
   cout << "\nTraining finished.\n\n";
 }
 
-void BpNet::Test() {
-  while (1) {
-    cout << "\nTest the model? (y/n):";
-    char c;
-    cin.get(c);
-    if (c == 'y' || c == 'Y') {}
-    else if (c == 'n' || c == 'N') {
-      return;
-    } else {
-      continue;
-    }
+void BpNet::Test(const std::string& filepath) {
+  DataSet* testset = new DataSet;
+  testset->GetTestData(filepath);
+  auto it = testset->dataset.begin(), it_end = testset->dataset.end();
 
-    cout << "Please input the data:\n";
-    Data test = {{0, 0, 1},{0}};
-    for (size_t i = 0; i < test.in.size() - 1; ++i) {
-      cin >> test.in[i];
-    }
-
-    cin.clear();
-    cin.ignore(INT_MAX, '\n');
-
+  cout << "\nTesting the model...\n";
+  while (it != it_end) {    
     array_h1 out_h1 = {0};
-    GetOutH1(test.in, out_h1);
+    GetOutH1(it->in, out_h1);
 
-    GetOutO(out_h1, test.out);
+    array_o out_o = {0};
+    GetOutO(out_h1, it->out);
 
-    cout << "The output is:\n";
-    for (const auto& e : test.out) {
+    array_o err_o = {0};
+    GetErrO(it->out, out_o, err_o);
+
+    cout << "The output error is:\n";
+    for (const auto& e : err_o) {
       cout << e << "\t";
     }
     cout << "\n";
   }
+  delete testset;
+  cout << "\nTesting finished.\n\n";
 }
 
 void BpNet::GetOutH1(const array_i& in, array_h1& out_h1) {
@@ -189,3 +192,5 @@ void BpNet::UpdateWH1(const array_i& in, const array_h1& sigma_h1) {
     }
   }
 }
+
+} // namespace bpnn
