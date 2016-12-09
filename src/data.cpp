@@ -30,7 +30,7 @@ const vector<string> filename = {
 const size_t img_size = 30; // img_size * img_size = IN
 
 // Read dat from a img. ccnt is the counter of clusters.
-void ReadDataFromImg(const Mat& img, Data& dat, size_t ccnt) {
+void ReadDataFromImg(Mat& img, Data& dat, size_t ccnt) {
   auto it_dat = dat.in.begin();
   cv::resize(img, img, cv::Size(img_size, img_size));
   cv::MatConstIterator_<uchar> it_img = img.begin<uchar>(), it_img_end = img.end<uchar>();
