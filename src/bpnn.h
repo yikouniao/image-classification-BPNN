@@ -10,7 +10,7 @@
 * Output layer:
 *   learning rate of weight value: fixed as 0.6
 * Convergence checking:
-*   |error| < 0.008 */
+*   |error| < 0.1 */
 
 #include "data.h"
 
@@ -30,14 +30,21 @@ using array_h1_w = std::array<double, HIDEN1 - 1>;
 
 class BpNet {
  public:
-  BpNet(double rate_h1_ = 0.6, double rate_o_ = 0.6, double err_thres_ = 0.008);
+  BpNet(double rate_h1_ = 0.6, double rate_o_ = 0.6, double err_thres_ = 0.1);
   ~BpNet();
 
   // train the neural net
-  void Train(const std::string& filepath);
+  void Train(const std::string& img_filepath);
 
   // test the model
-  void Test(const std::string& filepath);
+  void Test(const std::string& img_filepath);
+
+  // write weights to file
+  void FileWrite(const std::string& weight_file);
+
+  // read weights from file
+  // return 0 if successfully read all data, otherwise return a non 0 value.
+  int FileRead(const std::string& weight_file);
 
  private:
   std::array<array_h1_w, IN> w_h1; // the input weights of hiden nodes in the 1st layer

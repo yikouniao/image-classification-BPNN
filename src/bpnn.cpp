@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <opencv2/core.hpp>
 
 namespace bpnn {
 
@@ -43,9 +44,9 @@ BpNet::BpNet(double rate_h1_, double rate_o_, double err_thres_)
 
 BpNet::~BpNet() {}
 
-void BpNet::Train(const std::string& filepath) {
+void BpNet::Train(const std::string& img_filepath) {
   DataSet* samples = new DataSet;
-  samples->GetTrainData(filepath);
+  samples->GetTrainData(img_filepath);
 
   const size_t samples_num = samples->dataset.size();
   size_t train_times = 0;
@@ -93,9 +94,9 @@ void BpNet::Train(const std::string& filepath) {
   cout << "\nTraining finished.\n\n";
 }
 
-void BpNet::Test(const std::string& filepath) {
+void BpNet::Test(const std::string& img_filepath) {
   DataSet* testset = new DataSet;
-  testset->GetTestData(filepath);
+  testset->GetTestData(img_filepath);
   auto it = testset->dataset.begin(), it_end = testset->dataset.end();
 
   cout << "\nTesting the model...\n";
@@ -117,6 +118,98 @@ void BpNet::Test(const std::string& filepath) {
   }
   delete testset;
   cout << "\nTesting finished.\n\n";
+}
+
+void BpNet::FileWrite(const std::string& weight_file) {
+  cout << "Writing weight into file...\n";
+  cv::FileStorage fs(weight_file, cv::FileStorage::WRITE);
+
+  // write w_h1
+  {
+    fs << "w_h1" << "[";
+    auto it = w_h1.begin(), it_end = w_h1.end();
+    while (it != it_end) {
+      auto it_in = it->begin(), it_in_end = it->end();
+      while (it_in != it_in_end) {
+        fs << *it_in;
+        ++it_in;
+      }
+      ++it;
+    }
+    fs << "]";
+  }
+
+  // write w_o
+  {
+    fs << "w_o" << "[";
+    auto it = w_o.begin(), it_end = w_o.end();
+    while (it != it_end) {
+      auto it_in = it->begin(), it_in_end = it->end();
+      while (it_in != it_in_end) {
+        fs << *it_in;
+        ++it_in;
+      }
+      ++it;
+    }
+    fs << "]";
+  }
+
+  // write rate_h1, rate_o and err_thres
+  fs << "rate_h1" << rate_h1;
+  fs << "rate_o" << rate_o;
+  fs << "err_thres" << err_thres;
+
+  fs.release();
+  cout << "Write done.\n";
+}
+
+int BpNet::FileRead(const std::string& weight_file) {
+  cout << "Reading weight from file...\n";
+  cv::FileStorage fs;
+  fs.open(weight_file, cv::FileStorage::READ);
+  if (!fs.isOpened()) {
+    std::cerr << "Failed to open " + weight_file << "\n";
+    return -1;
+  }
+
+  // read w_h1
+  {
+    cv::FileNode n = fs["w_h1"];
+    cv::FileNodeIterator fit = n.begin();
+    auto it = w_h1.begin(), it_end = w_h1.end();
+    while (it != it_end) {
+      auto it_in = it->begin(), it_in_end = it->end();
+      while (it_in != it_in_end) {
+        *it_in = (double)*fit;
+        ++it_in;
+      }
+      ++it;
+    }
+  }
+
+  // read w_o
+  {
+    cv::FileNode n = fs["w_o"];
+    cv::FileNodeIterator fit = n.begin();
+    auto it = w_o.begin(), it_end = w_o.end();
+    while (it != it_end) {
+      auto it_in = it->begin(), it_in_end = it->end();
+      while (it_in != it_in_end) {
+        *it_in = (double)*fit;
+        ++it_in;
+      }
+      ++it;
+    }
+  }
+
+  // read rate_h1, rate_o and err_thres
+  fs["rate_h1"] >> rate_h1;
+  fs["rate_o"] >> rate_o;
+  fs["err_thres"] >> err_thres;
+
+  fs.release();
+  cout << "Read done.\n";
+  return 0;
 }
 
 void BpNet::GetOutH1(const array_i& in, array_h1& out_h1) {
