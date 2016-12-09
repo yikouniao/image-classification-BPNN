@@ -22,7 +22,7 @@ const vector<string> filename = {
   "device7", "device8", "device9", "dog", "elephant", "face", "fish",
   "flatfish", "fly", "fork", "fountain", "frog", "Glas", "guitar", "hammer",
   "hat", "HCircle", "Heart", "horse", "horseshoe", "jar", "key", "lizzard",
-  "Imfish", "Misk", "octopus", "pencil", "personal_car", "pocket", "rat",
+  "lmfish", "Misk", "octopus", "pencil", "personal_car", "pocket", "rat",
   "ray", "sea_snake", "shoe", "spoon", "spring", "stef", "teddy", "tree",
   "truck", "turtle", "watch"
 };
@@ -52,7 +52,8 @@ void DataSet::GetTrainData(const string& filepath) {
     int train_cnt = 18;
     while (train_cnt) {
       Data* dat = new Data;
-      Mat img = cv::imread(filepath + filename[ccnt] + "-" + std::to_string(train_cnt) + ".gif", 0);
+      string fname = filepath + filename[ccnt] + "-" + std::to_string(train_cnt) + ".jpg";
+      Mat img = cv::imread(fname, CV_LOAD_IMAGE_GRAYSCALE);
       ReadDataFromImg(img, *dat, ccnt);
       dataset.insert(dataset.begin(), *dat);
       delete dat;
@@ -66,7 +67,8 @@ void DataSet::GetTestData(const string& filepath) {
     int test_cnt = 20;
     while (test_cnt > 18) {
       Data* dat = new Data;
-      Mat img = cv::imread(filepath + filename[ccnt] + "-" + std::to_string(test_cnt) + ".gif", 0);
+      string fname = filepath + filename[ccnt] + "-" + std::to_string(test_cnt) + ".jpg";
+      Mat img = cv::imread(fname, CV_LOAD_IMAGE_GRAYSCALE);
       ReadDataFromImg(img, *dat, ccnt);
       dataset.insert(dataset.begin(), *dat);
       delete dat;
