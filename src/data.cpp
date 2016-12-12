@@ -38,7 +38,10 @@ void ReadDataFromImg(Mat& img, Data& dat, size_t ccnt) {
     *it_dat++ = *it_img++ > 125 ? 1 : 0;
   }
   *it_dat = 1; // the last input node for bias
-  dat.out[ccnt] = 1; // output info
+
+  // output info
+  dat.out.fill(0);
+  dat.out[ccnt] = 1;
 }
 
 } // namespace
