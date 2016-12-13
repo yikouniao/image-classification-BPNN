@@ -10,7 +10,9 @@
 * Output layer:
 *   learning rate of weight value: fixed as 0.6
 * Convergence checking:
-*   |error| < 0.1 */
+*   |error| < 0.1
+* When more than (total train samples * 0.98) samples are correct, stop trainning.
+*/
 
 #include "data.h"
 
@@ -21,7 +23,7 @@ using data::array_o;
 
 // The number of actual hiden nodes shold be HIDEN1 - 1. The special node with
 // value 1 works the same as thresholds of next layer.
-#define HIDEN1 (50 + 1)
+#define HIDEN1 (150 + 1)
 
 using array_h1 = std::array<double, HIDEN1>;
 // When generating weights between hiden nodes and input nodes, leave out the
@@ -30,7 +32,7 @@ using array_h1_w = std::array<double, HIDEN1 - 1>;
 
 class BpNet {
  public:
-  BpNet(double rate_h1_ = 0.6, double rate_o_ = 0.6, double err_thres_ = 0.1);
+  BpNet(double rate_h1_ = .5, double rate_o_ = .5, double err_thres_ = .05, double train_accu_rate_ = .98);
   ~BpNet();
 
   // train the neural net
@@ -51,7 +53,8 @@ class BpNet {
   std::array<array_o, HIDEN1> w_o; // the input weights of output nodes
   double rate_h1; // learning rate of hiden nodes in the 1st layer
   double rate_o; // learning rate of output nodes
-  double err_thres; // threshold for convergence checking
+  double err_thres; // error threshold for convergence checking
+  double train_accu_rate; // when more than (total train samples * this value) samples are correct, stop trainning
 
   // compute the output of hiden nodes in the 1st layer
   void GetOutH1(const array_i& in, array_h1& out_h1);

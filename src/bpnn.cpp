@@ -7,6 +7,8 @@
 namespace bpnn {
 
 using std::cout;
+using std::max_element;
+using std::distance;
 using data::DataSet;
 
 namespace {
@@ -23,8 +25,8 @@ inline double Sigmod(double x) {
 
 } // namespace
 
-BpNet::BpNet(double rate_h1_, double rate_o_, double err_thres_)
-  : rate_h1(rate_h1_), rate_o(rate_o_), err_thres(err_thres_) {
+BpNet::BpNet(double rate_h1_, double rate_o_, double err_thres_, double train_accu_rate_)
+    : rate_h1(rate_h1_), rate_o(rate_o_), err_thres(err_thres_), train_accu_rate(train_accu_rate_) {
   srand(time(0)); // use current time as seed for random generator
 
 // initialize w_h1
@@ -46,15 +48,20 @@ BpNet::~BpNet() {}
 
 void BpNet::Train(const std::string& img_filepath) {
   DataSet* samples = new DataSet;
-  samples->GetTrainData(img_filepath);
+  try {
+    samples->GetTrainData(img_filepath);
+  } catch (const std::exception& e) {
+    std::cerr << "\nFailed to open file " << e.what() << "\n";
+    return;
+  }
 
   const size_t samples_num = samples->dataset.size();
   size_t train_times = 0;
   bool conv = false;
   while (!conv) {
-    conv = true;
     ++train_times;
     cout << "The " << train_times << " times training...\n";
+    size_t total = 0, correct = 0; // total and correct train samples number
     for (size_t samples_order = 0; samples_order < samples_num; ++samples_order) {
       // Propagation
       array_h1 out_h1 = {0};
@@ -65,16 +72,10 @@ void BpNet::Train(const std::string& img_filepath) {
 
       array_o err_o = {0};
       GetErrO(samples->dataset[samples_order].out, out_o, err_o);
-      if (!CheckConv(err_o)) {
-        conv = false;
+      if (CheckConv(err_o)) {
+        ++correct;
       }
-      if (!(samples_order % 5)) {
-        cout << "Sample " << samples_order << " error: ";
-        for (const auto& e_o : err_o) {
-          cout << e_o << "\t";
-        }
-        cout << "\n";
-      }
+      ++total;
 
       // weights and thresholds update
       array_o sigma_o = {0};
@@ -89,6 +90,12 @@ void BpNet::Train(const std::string& img_filepath) {
       UpdateWO(out_h1, sigma_o);
       UpdateWH1(samples->dataset[samples_order].in, sigma_h1);
     }
+
+    double correct_rate = double(correct) / total;
+    cout << correct_rate * 100 << " per sent of train samples are correct.\n";
+    if (correct_rate > train_accu_rate) {
+      conv = true;
+    }
   }
   delete samples;
   cout << "\nTraining finished.\n\n";
@@ -96,28 +103,40 @@ void BpNet::Train(const std::string& img_filepath) {
 
 void BpNet::Test(const std::string& img_filepath) {
   DataSet* testset = new DataSet;
-  testset->GetTestData(img_filepath);
+  try {
+    testset->GetTestData(img_filepath);
+  } catch (const std::exception& e) {
+    std::cerr << "\nFailed to open file " << e.what() << "\n";
+    return;
+  }
   auto it = testset->dataset.begin(), it_end = testset->dataset.end();
 
   cout << "\nTesting the model...\n";
+  size_t total = 0, correct = 0; // total and correct test samples number
   while (it != it_end) {    
     array_h1 out_h1 = {0};
     GetOutH1(it->in, out_h1);
 
     array_o out_o = {0};
-    GetOutO(out_h1, it->out);
+    GetOutO(out_h1, out_o);
 
-    array_o err_o = {0};
-    GetErrO(it->out, out_o, err_o);
-
-    cout << "The output error is:\n";
-    for (const auto& e : err_o) {
-      cout << e << "\t";
+    // In the test stage, select the class with biggest output value as the samples' class.
+    // These two variables store the class number of groundtrue and test value.
+    int c_groundtrue = distance(it->out.begin(), max_element(it->out.begin(), it->out.end()));
+    int c_output = distance(out_o.begin(), max_element(out_o.begin(), out_o.end()));
+    cout << "Groundtrue: " << c_groundtrue << " output: " << c_output;
+    if (c_groundtrue == c_output) {
+      cout << " TRUE\n";
+      ++correct;
+    } else {
+      cout << " FALSE\n";
     }
-    cout << "\n";
+
+    ++total;
+    ++it;
   }
   delete testset;
-  cout << "\nTesting finished.\n\n";
+  cout << "\nTesting finished.\nTotal accuracy: " << double(correct) / total << "\n";
 }
 
 void BpNet::FileWrite(const std::string& weight_file) {

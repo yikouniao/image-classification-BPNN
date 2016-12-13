@@ -51,12 +51,15 @@ DataSet::DataSet() {}
 DataSet::~DataSet() {}
 
 void DataSet::GetTrainData(const string& filepath) {
-  for (size_t ccnt = 0; ccnt < IN; ++ccnt) {
-    int train_cnt = 18;
-    while (train_cnt) {
+  for (size_t ccnt = 0; ccnt < filename.size(); ++ccnt) {
+    int train_cnt = 20;
+    while (train_cnt > 2) {
       Data* dat = new Data;
       string fname = filepath + filename[ccnt] + "-" + std::to_string(train_cnt) + ".jpg";
       Mat img = cv::imread(fname, CV_LOAD_IMAGE_GRAYSCALE);
+      if (img.empty()) {
+        throw std::runtime_error(fname);
+      }
       ReadDataFromImg(img, *dat, ccnt);
       dataset.insert(dataset.begin(), *dat);
       delete dat;
@@ -66,12 +69,15 @@ void DataSet::GetTrainData(const string& filepath) {
 }
 
 void DataSet::GetTestData(const string& filepath) {
-  for (size_t ccnt = 0; ccnt < IN; ++ccnt) {
-    int test_cnt = 20;
-    while (test_cnt > 18) {
+  for (size_t ccnt = 0; ccnt < filename.size(); ++ccnt) {
+    int test_cnt = 2;
+    while (test_cnt > 0) {
       Data* dat = new Data;
       string fname = filepath + filename[ccnt] + "-" + std::to_string(test_cnt) + ".jpg";
       Mat img = cv::imread(fname, CV_LOAD_IMAGE_GRAYSCALE);
+      if (img.empty()) {
+        throw std::runtime_error(fname);
+      }
       ReadDataFromImg(img, *dat, ccnt);
       dataset.insert(dataset.begin(), *dat);
       delete dat;
