@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <string>
-#include <ctime>
 #include "bpnn.h"
 
 using bpnn::BpNet;
@@ -27,9 +26,7 @@ int main(int argc, char** argv) {
     flag = bp_net->FileRead(argv[3]);
   }
   if (flag || !std::stoi(argv[2])) {
-    const clock_t begin_time = clock();
     bp_net->Train(argv[1]);
-    std::cout << "\nTotal time spent: " << float(clock() - begin_time) / CLOCKS_PER_SEC << "s.\n\n";
     bp_net->FileWrite(argv[3]);
   }
 

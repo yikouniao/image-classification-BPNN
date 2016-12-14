@@ -35,7 +35,7 @@ void ReadDataFromImg(Mat& img, Data& dat, size_t ccnt) {
   cv::resize(img, img, cv::Size(img_size, img_size));
   cv::MatConstIterator_<uchar> it_img = img.begin<uchar>(), it_img_end = img.end<uchar>();
   while (it_img != it_img_end) {
-    *it_dat++ = *it_img++ > 125 ? 1 : 0;
+    *it_dat++ = *it_img++ > 127 ? 1 : 0;
   }
   *it_dat = 1; // the last input node for bias
 

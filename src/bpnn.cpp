@@ -47,6 +47,7 @@ BpNet::BpNet(double rate_h1_, double rate_o_, double err_thres_, double train_ac
 BpNet::~BpNet() {}
 
 void BpNet::Train(const std::string& img_filepath) {
+  // get train data
   DataSet* samples = new DataSet;
   try {
     samples->GetTrainData(img_filepath);
@@ -55,6 +56,7 @@ void BpNet::Train(const std::string& img_filepath) {
     return;
   }
 
+  const clock_t begin_time = clock();
   const size_t samples_num = samples->dataset.size();
   size_t train_times = 0;
   bool conv = false;
@@ -91,17 +93,25 @@ void BpNet::Train(const std::string& img_filepath) {
       UpdateWH1(samples->dataset[samples_order].in, sigma_h1);
     }
 
+    // reduce the learning rate while approaching the min cost
+    UpdateRate(rate_h1);
+    UpdateRate(rate_o);
+
+    // check whether converges or not
     double correct_rate = double(correct) / total;
     cout << correct_rate * 100 << " per sent of train samples are correct.\n";
     if (correct_rate > train_accu_rate) {
       conv = true;
     }
+
   }
+  std::cout << "\nTotal time spent: " << float(clock() - begin_time) / CLOCKS_PER_SEC << "s.\n\n";
   delete samples;
   cout << "\nTraining finished.\n\n";
 }
 
 void BpNet::Test(const std::string& img_filepath) {
+  // get test data
   DataSet* testset = new DataSet;
   try {
     testset->GetTestData(img_filepath);
@@ -302,6 +312,17 @@ void BpNet::UpdateWH1(const array_i& in, const array_h1& sigma_h1) {
     for (size_t j = 0; j < IN; ++j) {
       w_h1[j][i] += delta_w * in[j];
     }
+  }
+}
+
+void BpNet::UpdateRate(double& rate) {
+  // reduce the learning rate while approaching the min cost
+  if (rate > .5) {
+    rate -= .01;
+  } else if (rate > .3) {
+    rate -= .05;
+  } else if (rate > .1) {
+    rate -= .02;
   }
 }
 

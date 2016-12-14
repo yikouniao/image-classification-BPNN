@@ -23,7 +23,7 @@ using data::array_o;
 
 // The number of actual hiden nodes shold be HIDEN1 - 1. The special node with
 // value 1 works the same as thresholds of next layer.
-#define HIDEN1 (150 + 1)
+#define HIDEN1 (120 + 1)
 
 using array_h1 = std::array<double, HIDEN1>;
 // When generating weights between hiden nodes and input nodes, leave out the
@@ -32,7 +32,7 @@ using array_h1_w = std::array<double, HIDEN1 - 1>;
 
 class BpNet {
  public:
-  BpNet(double rate_h1_ = .5, double rate_o_ = .5, double err_thres_ = .05, double train_accu_rate_ = .98);
+  BpNet(double rate_h1_ = .7, double rate_o_ = .7, double err_thres_ = .05, double train_accu_rate_ = .98);
   ~BpNet();
 
   // train the neural net
@@ -84,6 +84,9 @@ class BpNet {
 
   // update the input weights of hiden nodes in the 1st layer
   void UpdateWH1(const array_i& in, const array_h1& sigma_h1);
+
+  // update the learning rate
+  void UpdateRate(double& rate);
 };
 
 } // namespace bpnn
